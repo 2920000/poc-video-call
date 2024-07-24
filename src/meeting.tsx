@@ -8,6 +8,7 @@ import NoPhotographyOutlinedIcon from "@mui/icons-material/NoPhotographyOutlined
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import PresentToAllOutlinedIcon from "@mui/icons-material/PresentToAllOutlined";
 import RadioButtonCheckedOutlinedIcon from "@mui/icons-material/RadioButtonCheckedOutlined";
+import StopCircleIcon from "@mui/icons-material/StopCircle";
 import StopScreenShareOutlinedIcon from "@mui/icons-material/StopScreenShareOutlined";
 import {
   Box,
@@ -41,10 +42,12 @@ const MeetingV2: FC<MeetingV2Props> = ({
     audio: boolean;
     shareScreen: boolean;
     isExistSharing?: boolean;
+    startLiveTranscription?: boolean;
   }>({
     camera: true,
     audio: true,
     shareScreen: false,
+    startLiveTranscription: false,
   });
   const [subscriberLoading, setSubscriberLoading] = useState<boolean>(true);
   const [transcription, setTranscription] = useState<
@@ -189,30 +192,13 @@ const MeetingV2: FC<MeetingV2Props> = ({
     });
   };
 
-  const handleStartCaption = async () => {
-    const captionId = await fetch(
-      `http://localhost:4000/api/opentok/start-captions`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({
-          sessionId,
-          token,
-        }),
-      }
-    );
-    console.log(captionId);
-    if (typeof captionId === "string") {
-      captionIdRef.current = captionId;
-    }
-  };
-
-  const handleStopCaption = async () => {
-    const response = await fetch(
-      `http://localhost:4000/api/opentok/stop-captions`,
-      {
+  const handleLiveCaption = async () => {
+    setPublisherMode((prev) => ({
+      ...prev,
+      startLiveTranscription: !prev.startLiveTranscription,
+    }));
+    if (publisherMode.startLiveTranscription) {
+      await fetch(`http://localhost:4000/api/opentok/stop-captions`, {
         headers: {
           "Content-Type": "application/json",
         },
@@ -220,9 +206,29 @@ const MeetingV2: FC<MeetingV2Props> = ({
         body: JSON.stringify({
           captionId: captionIdRef.current,
         }),
+      });
+    } else {
+      const response = await fetch(
+        `http://localhost:4000/api/opentok/start-captions`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+          body: JSON.stringify({
+            sessionId,
+            token,
+          }),
+        }
+      );
+      const caption = await response.text();
+      console.log(caption);
+      if (typeof caption === "string") {
+        captionIdRef.current = (
+          JSON.parse(caption) as { captionsId: string }
+        ).captionsId;
       }
-    );
-    console.log(response);
+    }
   };
 
   const handleVideoIconActions = (type: string) => {
@@ -238,7 +244,7 @@ const MeetingV2: FC<MeetingV2Props> = ({
         handleScreenSharing();
         break;
       case "caption":
-        handleStartCaption();
+        handleLiveCaption();
         break;
       case "options":
       default:
@@ -248,6 +254,13 @@ const MeetingV2: FC<MeetingV2Props> = ({
   const handleFullScreen = () => {
     const subscriber = document.querySelector(".OT_subscriber ") as HTMLElement;
     //TODO : Need to confirm UI
+  };
+
+  const renderLiveCaptionBtn = () => {
+    if (publisherMode.startLiveTranscription) {
+      return <StopCircleIcon width={"16px"} height="16px" />;
+    }
+    return <PlayCircleOutlineIcon width={"16px"} height="16px" />;
   };
 
   const renderCameraBtn = () => {
@@ -291,8 +304,12 @@ const MeetingV2: FC<MeetingV2Props> = ({
       icon: renderShareScreenBtn(),
       isActive: publisherMode.shareScreen,
     },
+    {
+      type: "caption",
+      icon: renderLiveCaptionBtn(),
+      isActive: publisherMode.startLiveTranscription,
+    },
     { type: "options", icon: <MoreHorizOutlinedIcon />, isActive: false },
-    { type: "caption", icon: <PlayCircleOutlineIcon />, isActive: false },
   ];
 
   return (
@@ -478,7 +495,7 @@ const StyledSubscriber = styled(Box)<{
   }};
 `;
 
-const StyledInteractVideoBtn = styled(Box)<{ isActive: boolean }>`
+const StyledInteractVideoBtn = styled(Box)<{ isActive?: boolean }>`
   width: 32px;
   height: 32px;
   border-radius: 50%;
