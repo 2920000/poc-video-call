@@ -1,6 +1,7 @@
 import { Box, Button, Stack, TextField } from "@mui/material";
 import { useState } from "react";
 import MeetingV2 from "./meeting";
+import { url } from "./url";
 
 const App = () => {
   const [isStartCall, setIsStartCall] = useState<boolean>(false);
@@ -19,9 +20,7 @@ const App = () => {
   });
 
   const handleJoinRoom = async () => {
-    const res = await fetch(
-      `https://poc-video-backend.vercel.app/api/room/${roomInfo.roomname}`
-    );
+    const res = await fetch(`${url}/api/room/${roomInfo.roomname}`);
     const dataJson = await res.text();
     const data = JSON.parse(dataJson);
     setRoomInfo((prev) => ({

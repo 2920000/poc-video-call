@@ -21,6 +21,7 @@ import {
 } from "@mui/material";
 import OT from "@opentok/client";
 import { FC, ReactElement, useEffect, useRef, useState } from "react";
+import { url } from "./url";
 type MeetingV2Props = {
   appKey: string;
   token: string;
@@ -198,40 +199,52 @@ const MeetingV2: FC<MeetingV2Props> = ({
       startLiveTranscription: !prev.startLiveTranscription,
     }));
     if (publisherMode.startLiveTranscription) {
-      await fetch(
-        `https://poc-video-backend.vercel.app/api/opentok/stop-captions`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          method: "POST",
-          body: JSON.stringify({
-            captionId: captionIdRef.current,
-          }),
-        }
-      );
+      await fetch(`${url}/api/opentok/stop-captions`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify({
+          captionId: captionIdRef.current,
+        }),
+      });
     } else {
-      const response = await fetch(
-        `https://poc-video-backend.vercel.app/api/opentok/start-captions`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          method: "POST",
-          body: JSON.stringify({
-            sessionId,
-            token,
-          }),
-        }
-      );
+      const response = await fetch(`${url}/api/opentok/start-captions`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify({
+          sessionId,
+          token,
+        }),
+      });
       const caption = await response.text();
-      console.log(caption);
       if (typeof caption === "string") {
-        captionIdRef.current = (
-          JSON.parse(caption) as { captionsId: string }
-        ).captionsId;
+        captionIdRef.current = JSON.parse(caption).captionsId;
       }
     }
+  };
+
+  const handleDownload = async () => {
+    const blob = new Blob(
+      [
+        ...transcription.map(
+          (item) => `Name: ${item.name} \n Text: ${item.text} \n`
+        ),
+      ],
+      {
+        type: "text/plain",
+      }
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "transcript.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const handleVideoIconActions = (type: string) => {
@@ -392,7 +405,14 @@ const MeetingV2: FC<MeetingV2Props> = ({
           p={"16px 20px"}
         >
           <Typography>Transcript</Typography>
-          <Button variant="outlined">Live Transcript</Button>
+          <Button
+            sx={{
+              textTransform: "none",
+            }}
+            variant="outlined"
+          >
+            Live Transcript
+          </Button>
         </Stack>
         <Divider />
         <StyledLiveTranscriptContent>
@@ -403,6 +423,18 @@ const MeetingV2: FC<MeetingV2Props> = ({
             </Box>
           ))}
         </StyledLiveTranscriptContent>
+        <Divider />
+        <Stack p={"16px 32px"} flexDirection={"row"} justifyContent={"end"}>
+          <Button
+            sx={{
+              textTransform: "none",
+            }}
+            variant="outlined"
+            onClick={handleDownload}
+          >
+            Download transcript
+          </Button>
+        </Stack>
       </StyledLiveTranscript>
     </Stack>
   );
@@ -412,7 +444,6 @@ export default MeetingV2;
 
 const StyledLiveTranscript = styled(Box)`
   width: 389px;
-  height: 500px;
   border-radius: 12px;
   border: 1px solid #b6b6b6;
 `;
