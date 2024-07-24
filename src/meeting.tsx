@@ -86,10 +86,12 @@ const MeetingV2: FC<MeetingV2Props> = ({
               }
             );
             captionOnlySub.on("captionReceived", (event) => {
-              setTranscription((prev) => [
-                ...prev,
-                { name, text: event.caption },
-              ]);
+              if (event.isFinal) {
+                setTranscription((prev) => [
+                  ...prev,
+                  { name, text: event.caption },
+                ]);
+              }
             });
             publisherRef.current = publisher;
           });
@@ -113,12 +115,13 @@ const MeetingV2: FC<MeetingV2Props> = ({
       await subscriber.subscribeToCaptions(true);
 
       subscriber.on("captionReceived", (event) => {
-        console.log(event);
         const speakerName = mapNameRef.current[event.streamId];
-        setTranscription((prev) => [
-          ...prev,
-          { name: speakerName, text: event.caption },
-        ]);
+        if (event.isFinal) {
+          setTranscription((prev) => [
+            ...prev,
+            { name: speakerName, text: event.caption },
+          ]);
+        }
       });
       // setSubscriber((prev) => [...prev, subscriber]);
       subscribersRef.current?.push(subscriber);
@@ -132,8 +135,6 @@ const MeetingV2: FC<MeetingV2Props> = ({
 
     sessionRef.current = session;
   }, [appKey, sessionId, token, startCallVideo, name]);
-
-  console.log("transcription", transcription);
 
   useEffect(() => {
     publisherRef?.current?.publishVideo(publisherMode.camera);
