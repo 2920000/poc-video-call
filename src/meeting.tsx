@@ -198,18 +198,21 @@ const MeetingV2: FC<MeetingV2Props> = ({
       startLiveTranscription: !prev.startLiveTranscription,
     }));
     if (publisherMode.startLiveTranscription) {
-      await fetch(`http://localhost:4000/api/opentok/stop-captions`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({
-          captionId: captionIdRef.current,
-        }),
-      });
+      await fetch(
+        `https://poc-video-backend.vercel.app/api/opentok/stop-captions`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+          body: JSON.stringify({
+            captionId: captionIdRef.current,
+          }),
+        }
+      );
     } else {
       const response = await fetch(
-        `http://localhost:4000/api/opentok/start-captions`,
+        `https://poc-video-backend.vercel.app/api/opentok/start-captions`,
         {
           headers: {
             "Content-Type": "application/json",

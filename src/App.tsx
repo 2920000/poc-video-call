@@ -20,7 +20,7 @@ const App = () => {
 
   const handleJoinRoom = async () => {
     const res = await fetch(
-      `http://localhost:4000/api/room/${roomInfo.roomname}`
+      `https://poc-video-backend.vercel.app/api/room/${roomInfo.roomname}`
     );
     const dataJson = await res.text();
     const data = JSON.parse(dataJson);
