@@ -151,7 +151,7 @@ const MeetingV2: FC<MeetingV2Props> = ({
     subscribersRef.current?.forEach((subscriber) => {
       sessionRef.current?.unsubscribe(subscriber);
     });
-
+    setTranscription([]);
     subscribersRef.current = [];
     publisherRef.current = undefined;
     sessionRef.current?.disconnect();
