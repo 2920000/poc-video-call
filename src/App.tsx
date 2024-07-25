@@ -1,10 +1,15 @@
 import { Box, Button, Stack, TextField } from "@mui/material";
 import { useState } from "react";
-import MeetingV2 from "./meeting";
+import { ToastContainer } from "react-toastify";
+import Transcription from "./Transcription/Transcription";
 import { url } from "./url";
+import VideoCall from "./VideoCall/VideoCall";
 
 const App = () => {
   const [isStartCall, setIsStartCall] = useState<boolean>(false);
+  const [transcription, setTranscription] = useState<
+    { name: string; text: string }[]
+  >([]);
   const [roomInfo, setRoomInfo] = useState<{
     roomname: string;
     appId: string;
@@ -60,14 +65,22 @@ const App = () => {
           Join room
         </Button>
       </Box>
-      <MeetingV2
-        setStartCallVideo={setIsStartCall}
-        startCallVideo={isStartCall}
-        appKey={roomInfo.appId}
-        name={roomInfo.name}
-        sessionId={roomInfo.sessionId}
-        token={roomInfo.token}
-      />
+      <Stack flexDirection={"row"} gap={1}>
+        <VideoCall
+          roomInfo={{
+            appKey: roomInfo.appId,
+            publisherName: roomInfo.name,
+            sessionId: roomInfo.sessionId,
+            token: roomInfo.token,
+          }}
+          setStartCallVideo={setIsStartCall}
+          startCallVideo={isStartCall}
+          baseUrl={url}
+          onTranscription={setTranscription}
+        />
+        {isStartCall && <Transcription transcription={transcription} />}
+        <ToastContainer />
+      </Stack>
     </Stack>
   );
 };
