@@ -109,7 +109,7 @@ export const useVonage = ({
       if (event.stream.videoType === "screen") {
         setPublisherFeature((prev) => ({ ...prev, isExistSharing: true }));
       }
-
+      mapNameRef.current[event.stream.streamId] = event.stream.name;
       const streamCreatedTarget =
         event.stream.videoType === "screen" ? "screen" : subscriberTarget;
 
